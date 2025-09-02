@@ -28,11 +28,10 @@ unsigned long motor2limit = 80000;
 unsigned long maxSpd = 5000;  //sets max speed for all steppers
 long homeUpSpd = 1500; //how fast the curtain runs up to home
 long homeDnSpd = -1500; //how fast the curtain runs down to home, must be negative
-long startPos = -8000; //how far the curtain runs out before beginning the homing sequence
+long startPos = -800; //how far the curtain runs out before beginning the homing sequence
 
-bool motorsHomed = false;
-bool topHomed = false;
-bool botHomed = false;
+bool m1homed = false;
+bool m2homed = false;
 bool atStartPos = false;
 
 #define motRX 9
@@ -49,10 +48,8 @@ bool atStartPos = false;
 #define AenPin 10
 #define BenPin 11
 
-#define AtopLim A2 //top limit switch
-#define AbotLim A3 //bottom limit switch
-#define BtopLim A4 //top limit switch
-#define BbotLim A5 //bottom limit switch
+#define m1lim A2 //top limit switch
+#define m2lim A3 //bottom limit switch
 
 #define motorInterfaceType 1
 
@@ -83,8 +80,8 @@ void setup() {
   motor2.setPinsInverted(false, false, false); //direction, step, enable 
 
 
-  pinMode(AtopLim, INPUT_PULLUP);
-  pinMode(AbotLim, INPUT_PULLUP);
+  pinMode(m1lim, INPUT_PULLUP);
+  pinMode(m2lim, INPUT_PULLUP);
   pinMode(motRX, OUTPUT);
   pinMode(motTX, OUTPUT);
   pinMode(AmotCLK, OUTPUT);
@@ -131,51 +128,60 @@ void motor2control(){
 }
 
 bool homeMotor1() {
-  bool topLimState = digitalRead(AtopLim);
-  bool botLimState = digitalRead(AbotLim);
-  motor1pos = motor1.currentPosition();
+  bool topLim1State = digitalRead(m1lim);
+  long motor1pos = motor1.currentPosition();
 
-    if (botHomed == false){
-     // Serial.println("homing bottom");
       motor1.setSpeed(homeDnSpd);
-      motor1.run();
-    }
-    if (botLimState == LOW){
+      motor1.moveTo(startPos);
+      motor1.runSpeedToPosition();
+
+    if (motor1pos == startPos){
+          motor1.setSpeed(homeUpSpd);
+          motor1.run();
+      }
+    if (topLim1State == LOW){
       motor1.stop();
-      motor1.setCurrentPosition(0); 
-      botHomed = true;
-      Serial.print("bottom homed = ");
-      Serial.println(botHomed);
-    }
-    if (botHomed == true && topHomed == false){
-      motor1.setSpeed(homeUpSpd);
-      motor1.run();
-     // Serial.println("homing top");
-       // Serial.println(motor1pos);
-    }
-    if (topLimState == LOW){
-      //motor1.stop();
       motor1limit = motor1.currentPosition();
-      topHomed = true;
-     // Serial.print("top homed = ");
+      m1homed = true;
+      Serial.print("Motor1 Homed");
       Serial.println(motor1pos);
     }
-    if(topHomed && botHomed == true){
-      motorsHomed = true;
-      Serial.print("we're home!");
+    return m1homed;
+}
+bool homeMotor2() {
+  bool topLim2State = digitalRead(m2lim);
+  long motor2pos = motor2.currentPosition();
+
+      motor1.setSpeed(homeDnSpd);
+      motor1.moveTo(startPos);
+      motor1.runSpeedToPosition();
+
+    if (motor2pos == startPos){
+          motor2.setSpeed(homeUpSpd);
+          motor2.run();
+      }
+    if (topLim2State == LOW){
+      motor2.stop();
+      motor2limit = motor2.currentPosition();
+      m2homed = true;
+      Serial.print("Motor2 Homed");
+      Serial.println(motor2pos);
     }
-    return motorsHomed;
+    return m2homed;
 }
 
 void loop() {
 
- //while (motorsHomed == false){
-  //  homeMotor1();
- // }
- // if (motorsHomed == true){
+ while (m1homed == false){
+    homeMotor1();
+ }
+  if (m1homed == true){
     motor1control();
+  }
+   while (m1homed == false){
+    homeMotor1();
+ }
+  if (m2homed == true){
     motor2control();
- // }
- //   if (atStartPos == false){
-//  }
+  }
 } 
