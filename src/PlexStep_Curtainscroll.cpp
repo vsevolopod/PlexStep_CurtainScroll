@@ -35,8 +35,6 @@ bool topHomed = false;
 bool botHomed = false;
 bool atStartPos = false;
 
-
-
 #define motRX 9
 #define motTX 8
 #define AmotCLK A0
@@ -166,6 +164,7 @@ bool homeMotor1() {
       motorsHomed = true;
       Serial.print("we're home!");
     }
+    return motorsHomed;
 }
 
 void loop() {

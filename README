@@ -1,0 +1,45 @@
+PlexStep_CurtainScroll
+Written by Vsev Krawczeniuk
+
+This is an arduino program for the PlexStep DMX Stepper motor drivers.
+They control two stepper motors using TMC2209 stepper drivers.
+The microcontroller used is an Atmega 32u4, currently we are treating the PlexStep boards as if they are an Arduino Leonardo.
+
+
+Pin Assignments:
+Driver 1 Enable: D10
+Driver 1 Step: D6
+Driver 1 DIR: D4
+Driver 1 DIAG: D2
+Driver 1 UART RX: D9
+Driver 1 UART TX: D8
+Driver 1 CLK: D12
+
+Driver 2 Enable: D11
+Driver 2 Step: D13
+Driver 2 DIR: D5
+Driver 2 DIAG: D3
+Driver 2 UART RX: D9
+Driver 2 UART TX: D8
+Driver 2 CLK: A0
+
+Steppers are handled by the AccelStepper library
+Currently in .pio/build/leonardo/lib8d5
+
+Pins A1-A5 are broken out to phoenix connectors.
+Currently they are assigned as:
+A2: Motor 1 homing hall effect sensor
+A3: Motor 2 homing hall effect sensor
+
+Reserved for future use:
+A1
+A4
+A5
+D2: Interrupt pin for E-Stop
+
+Currently only DMX In works. The DE and RE pins are tied to ground with a bodge wire to enable input only. Future versions of the board connect this pin to A1 and allow for RDM compatability. 
+DMX is handled by the DMXSerial library by mathertel
+Currewntly in .pio/build/leonardo/libb70
+
+This program was originally created in Arduino IDE and converted to Platform IO. 
+
