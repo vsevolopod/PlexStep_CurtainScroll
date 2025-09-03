@@ -1,9 +1,9 @@
-//DMX Fixture 1
+//Dual Curtain Scroll With PlexStep Boards
+//By Vsev Krawczeniuk
 
 #include <DMXSerial.h>
 #include <AccelStepper.h>
 #include <MultiStepper.h>
-//#include <EEPROM.h>
 
 int startAddress = 1; // unit 1 is address 1, unit 2 is address 7, unit 3 is address 13
 
@@ -28,7 +28,7 @@ unsigned long motor2limit = 80000;
 unsigned long maxSpd = 5000;  //sets max speed for all steppers
 long homeUpSpd = -1500; //how fast the curtain runs up to home
 long homeDnSpd = 1500; //how fast the curtain runs down to home, must be negative
-long startPos = 800; //how far the curtain runs out before beginning the homing sequence
+const int startPos = 200; //how far the curtain runs out before beginning the homing sequence
 
 bool m1homed = false;
 bool m2homed = false;
@@ -49,8 +49,8 @@ bool atStartPos2 = false;
 #define AenPin 10
 #define BenPin 11
 
-#define m1lim A3 //top limit switch
-#define m2lim A5 //bottom limit switch
+#define m1lim A3 //motor 1 top limit switch
+#define m2lim A5 //motor 2 top limit switch
 
 #define motorInterfaceType 1
 
@@ -78,7 +78,7 @@ void setup() {
   motor2.setMaxSpeed(maxSpd);
 
   motor1.setPinsInverted(true, false, false); //direction, step, enable, 1-3 direction = true, 4,5 direction = false 
-  motor2.setPinsInverted(false, false, false); //direction, step, enable 
+  motor2.setPinsInverted(true, false, false); //direction, step, enable, 1-3 direction = true, 4,5 direction = false 
 
 
   pinMode(m1lim, INPUT_PULLUP);
@@ -87,8 +87,8 @@ void setup() {
   pinMode(motTX, OUTPUT);
   pinMode(AmotCLK, OUTPUT);
   pinMode(BmotCLK, OUTPUT);
-  digitalWrite(AenPin,LOW); // to make Stepper motor enable
-  digitalWrite(BenPin,LOW); // to make Stepper motor enable
+  digitalWrite(AenPin,LOW); 
+  digitalWrite(BenPin,LOW); 
   digitalWrite(motRX, LOW);
   digitalWrite(motTX, LOW);
   digitalWrite(AmotCLK, LOW);
@@ -146,7 +146,6 @@ bool homeMotor1() {
     if (topLim1State == LOW){
       motor1.stop();
       motor1.setCurrentPosition(0);
-      //motor1limit = motor1.currentPosition();
       m1homed = true;
       Serial.print("Motor 1 Homed");
       Serial.println(motor1pos);
@@ -173,7 +172,6 @@ bool homeMotor2() {
     if (topLim2State == LOW){
       motor2.stop();
       motor2.setCurrentPosition(0);
-      //motor1limit = motor1.currentPosition();
       m2homed = true;
       Serial.print("Motor 2 Homed");
       Serial.println(motor2pos);
@@ -186,15 +184,12 @@ void loop() {
  while (m1homed == false){
     homeMotor1();
   }
-
   if (m1homed == true){
     motor1control();
   }
-
    while (m2homed == false){
     homeMotor2();
  }
- 
   if (m2homed == true){
     motor2control();
   }
