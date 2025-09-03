@@ -5,7 +5,7 @@
 #include <MultiStepper.h>
 //#include <EEPROM.h>
 
-int startAddress = 7; // unit 1 is address 1, unit 2 is address 7, unit 3 is address 13
+int startAddress = 1; // unit 1 is address 1, unit 2 is address 7, unit 3 is address 13
 
 int motor1ps_ad = startAddress;
 int motor1ps_fn_ad = startAddress + 1;
@@ -26,13 +26,14 @@ unsigned long motor1limit = 80000; //how far the motor is to travel
 unsigned long motor2limit = 80000;
 
 unsigned long maxSpd = 5000;  //sets max speed for all steppers
-long homeUpSpd = 1500; //how fast the curtain runs up to home
-long homeDnSpd = -1500; //how fast the curtain runs down to home, must be negative
-long startPos = -800; //how far the curtain runs out before beginning the homing sequence
+long homeUpSpd = -1500; //how fast the curtain runs up to home
+long homeDnSpd = 1500; //how fast the curtain runs down to home, must be negative
+long startPos = 800; //how far the curtain runs out before beginning the homing sequence
 
 bool m1homed = false;
 bool m2homed = false;
-bool atStartPos = false;
+bool atStartPos1 = false;
+bool atStartPos2 = false;
 
 #define motRX 9
 #define motTX 8
@@ -48,8 +49,8 @@ bool atStartPos = false;
 #define AenPin 10
 #define BenPin 11
 
-#define m1lim A2 //top limit switch
-#define m2lim A3 //bottom limit switch
+#define m1lim A3 //top limit switch
+#define m2lim A5 //bottom limit switch
 
 #define motorInterfaceType 1
 
@@ -130,41 +131,51 @@ void motor2control(){
 bool homeMotor1() {
   bool topLim1State = digitalRead(m1lim);
   long motor1pos = motor1.currentPosition();
-
+    if (atStartPos1 == false){
+      Serial.println("Homing Motor 1");
       motor1.setSpeed(homeDnSpd);
       motor1.moveTo(startPos);
       motor1.runSpeedToPosition();
-
-    if (motor1pos == startPos){
+      atStartPos1 = true;
+    }
+    if (atStartPos1 == true){
+      Serial.println("at starting point");
           motor1.setSpeed(homeUpSpd);
-          motor1.run();
+          motor1.runSpeed();
       }
     if (topLim1State == LOW){
       motor1.stop();
-      motor1limit = motor1.currentPosition();
+      motor1.setCurrentPosition(0);
+      //motor1limit = motor1.currentPosition();
       m1homed = true;
-      Serial.print("Motor1 Homed");
+      Serial.print("Motor 1 Homed");
       Serial.println(motor1pos);
     }
+  
     return m1homed;
 }
+
 bool homeMotor2() {
   bool topLim2State = digitalRead(m2lim);
   long motor2pos = motor2.currentPosition();
-
-      motor1.setSpeed(homeDnSpd);
-      motor1.moveTo(startPos);
-      motor1.runSpeedToPosition();
-
-    if (motor2pos == startPos){
+    if (atStartPos2 == false){
+      Serial.println("Homing Motor 2");
+      motor2.setSpeed(homeDnSpd);
+      motor2.moveTo(startPos);
+      motor2.runSpeedToPosition();
+      atStartPos2 = true;
+    }
+    if (atStartPos2 == true){
+      Serial.println("Motor 2 at starting point");
           motor2.setSpeed(homeUpSpd);
-          motor2.run();
+          motor2.runSpeed();
       }
     if (topLim2State == LOW){
       motor2.stop();
-      motor2limit = motor2.currentPosition();
+      motor2.setCurrentPosition(0);
+      //motor1limit = motor1.currentPosition();
       m2homed = true;
-      Serial.print("Motor2 Homed");
+      Serial.print("Motor 2 Homed");
       Serial.println(motor2pos);
     }
     return m2homed;
@@ -174,13 +185,16 @@ void loop() {
 
  while (m1homed == false){
     homeMotor1();
- }
+  }
+
   if (m1homed == true){
     motor1control();
   }
-   while (m1homed == false){
-    homeMotor1();
+
+   while (m2homed == false){
+    homeMotor2();
  }
+ 
   if (m2homed == true){
     motor2control();
   }

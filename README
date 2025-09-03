@@ -23,6 +23,8 @@ Driver 2 UART RX: D9
 Driver 2 UART TX: D8
 Driver 2 CLK: A0
 
+D2: Interrupt pin for E-Stop (not implemented)
+
 Steppers are handled by the AccelStepper library
 Currently in .pio/build/leonardo/lib8d5
 
@@ -35,7 +37,6 @@ Reserved for future use:
 A1
 A4
 A5
-D2: Interrupt pin for E-Stop
 
 Currently only DMX In works. The DE and RE pins are tied to ground with a bodge wire to enable input only. Future versions of the board connect this pin to A1 and allow for RDM compatability. 
 DMX is handled by the DMXSerial library by mathertel
