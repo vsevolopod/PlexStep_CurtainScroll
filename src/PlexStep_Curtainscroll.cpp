@@ -14,8 +14,8 @@ bool verbose = true; // prints diagnostic information to the serial monitor
 int startAddress = 1; // unit 1 is address 1, unit 2 is address 7, unit 3 is address 13
 bool invDir = true;
 bool dualMotor = true;
-unsigned long motor1limit = 5000; //how far the motor is to travel
-unsigned long motor2limit = 5000;
+unsigned long motor1limit = 1000; //how far the motor is to travel
+unsigned long motor2limit = 1000;
 #endif
 
 #if defined (CS)
@@ -55,9 +55,9 @@ long mot2pos = 0;
 
 unsigned long maxSpd = 3000;  //sets max speed for all steppers
 //unsigned long maxSpd2 = 5000;  //sets max speed for all steppers
-long homeUpSpd = -2000; //how fast the curtain runs up to home
-long homeDnSpd = 2000; //how fast the curtain runs down to home
-const int startPos = 1000; //how far the curtain runs out before beginning the homing sequence
+long homeUpSpd = -1000; //how fast the curtain runs up to home
+long homeDnSpd = 1000; //how fast the curtain runs down to home
+const int startPos = 500; //how far the curtain runs out before beginning the homing sequence
 
 bool m1homed = false;
 bool m2homed = false;
@@ -125,13 +125,15 @@ Serial.begin(19200);
 
 bool homeMotor1() {
   bool topLim1State = digitalRead(m1lim);
+      motor1.setCurrentPosition(0);
   //long motor1pos = motor1.currentPosition();
-    if (atStartPos1 == false){
+    //if (atStartPos1 == false){
       Serial.println("Homing Motor 1");
       motor1.setSpeed(homeDnSpd);
       motor1.moveTo(startPos);
+     motor1.runSpeedToPosition();
       atStartPos1 = true;
-    }
+
     if (atStartPos1 == true){
       Serial.println("at starting point 1");
           motor1.setSpeed(homeUpSpd);
