@@ -1,5 +1,6 @@
 //Dual Curtain Scroll With PlexStep Boards
 //By Vsev Krawczeniuk
+//This is the working version as of September 4, 2025.
 
 //worknotes: figure out the acceleration, figure out lower limit
 
