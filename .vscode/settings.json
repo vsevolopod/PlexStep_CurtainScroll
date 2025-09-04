@@ -1,0 +1,6 @@
+{
+    "idf.port": "/dev/tty.usbmodem1201",
+    "files.associations": {
+        "istream": "cpp"
+    }
+}

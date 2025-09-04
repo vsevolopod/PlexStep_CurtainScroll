@@ -1,5 +1,8 @@
 //Dual Curtain Scroll With PlexStep Boards
 //By Vsev Krawczeniuk
+//This is the working version as of September 4, 2025.
+
+//worknotes: figure out the acceleration, figure out lower limit
 
 #include <DMXSerial.h>
 #include <AccelStepper.h>
@@ -12,24 +15,32 @@ bool verbose = true; // prints diagnostic information to the serial monitor
 int startAddress = 1; // unit 1 is address 1, unit 2 is address 7, unit 3 is address 13
 bool invDir = true;
 bool dualMotor = true;
-unsigned long motor1limit = 90000; //how far the motor is to travel
-unsigned long motor2limit = 80000;
+unsigned int motor1limit = 1000; //how far the motor is to travel
+unsigned int motor2limit = 1000;
+const int map1Val = 1000;
+const int map2Val = 520;
 #endif
 
 #if defined (CS)
 int startAddress = 7; // unit 1 is address 1, unit 2 is address 7, unit 3 is address 13
 bool invDir = true;
 bool dualMotor = false;
-unsigned long motor1limit = 200000; //how far the motor is to travel
-unsigned long  motor2limit = 80000;
+unsigned long motor1limit = 1000; //how far the motor is to travel
+unsigned long  motor2limit = 1000;
+const int map1Val = 512;
+const int map2Val = 512;
+
 #endif
 
 #if defined (SR)
 int startAddress = 13; // unit 1 is address 1, unit 2 is address 7, unit 3 is address 13
 bool invDir = false;
 bool dualMotor = true;
-unsigned long motor1limit = 90000; //how far the motor is to travel
-unsigned long motor2limit = 80000;
+unsigned long motor1limit = 1000; //how far the motor is to travel
+unsigned long motor2limit = 1000;
+const int map1Val = 520;
+const int map2Val = 1000;
+
 #endif
 
 int motor1ps_ad = startAddress;
@@ -39,24 +50,24 @@ int motor2ps_ad = startAddress + 3;
 int motor2ps_fn_ad = startAddress + 4;
 int motor2sp_ad = startAddress + 5;
 
-int motor1crs = 0;
-int motor1fn = 0;
-int motor2crs = 0;
-int motor2fn = 0;
+int mot1crs = 0;
+int mot2crs = 0;
 
-unsigned long motor1spd = 0;
-unsigned long motor1pos = 0;
-unsigned long motor2spd = 0;
-unsigned long motor2pos = 0;
+int mot2fn = 0;
+int mot1fn = 0;
 
+long mot1spd = 0;
+long mot2spd = 0;
 
-unsigned long motor1spin = 0;
-unsigned long motor2spin = 0;
+long mot1pos = 0;
+long mot2pos = 0;
 
 unsigned long maxSpd = 5000;  //sets max speed for all steppers
-long homeUpSpd = -2000; //how fast the curtain runs up to home
-long homeDnSpd = 2000; //how fast the curtain runs down to home
-const int startPos = 1000; //how far the curtain runs out before beginning the homing sequence
+//unsigned long maxSpd2 = 5000;  //sets max speed for all steppers
+long homeUpSpd = -3000; //how fast the curtain runs up to home
+long homeDnSpd = 3000; //how fast the curtain runs down to home
+const int startPos = 500; //how far the curtain runs out before beginning the homing sequence
+
 
 bool m1homed = false;
 bool m2homed = false;
@@ -80,16 +91,18 @@ bool atStartPos2 = false;
 #define m1lim A3 //motor 1 top limit switch
 #define m2lim A5 //motor 2 top limit switch
 
-#define motorInterfaceType 1
+#define interface 1
 
-AccelStepper motor1 = AccelStepper(motorInterfaceType, AstepPin, AdirPin);
-AccelStepper motor2 = AccelStepper(motorInterfaceType, BstepPin, BdirPin);
+AccelStepper motor1 = AccelStepper(interface, AstepPin, AdirPin);
+AccelStepper motor2 = AccelStepper(interface, BstepPin, BdirPin);
+MultiStepper motors;
+
 
 
 void setup() {
-if (verbose == true){
-  Serial.begin(9600);
-}
+//if (verbose == true){
+//Serial.begin(19200);
+//}
 
   DMXSerial.init(DMXReceiver);
   DMXSerial.maxChannel(192);
@@ -100,8 +113,12 @@ if (verbose == true){
   motor1.setMaxSpeed(maxSpd);
   motor2.setMaxSpeed(maxSpd);
 
+
+
   motor1.setPinsInverted(invDir, false, false); //direction, step, enable, 1-3 direction = true, 4,5 direction = false 
   motor2.setPinsInverted(invDir, false, false); //direction, step, enable, 1-3 direction = true, 4,5 direction = false 
+  motors.addStepper(motor1);
+  motors.addStepper(motor2);
 
 
   pinMode(m1lim, INPUT_PULLUP);
@@ -118,49 +135,19 @@ if (verbose == true){
   digitalWrite(BmotCLK, LOW);
 }
 
-void motor1control(){
-  unsigned long lastPacket = DMXSerial.noDataSince();
-
-     if (lastPacket < 5000) {
-    motor1crs = DMXSerial.read(motor1ps_ad);
-    motor1fn = DMXSerial.read(motor1ps_fn_ad);
-    unsigned int motor1full = (motor1crs << 8) | motor1fn;
-        motor1spin = DMXSerial.read(motor1sp_ad);
-        motor1pos = map(motor1full, 0, 65535, 0, motor1limit);
-        motor1spd = map(motor1spin, 0, 255, 0, maxSpd);
-      motor1.setSpeed(motor1spd); 
-      motor1.moveTo(motor1full);
-      motor1.runSpeedToPosition();
-  }
-}
-void motor2control(){
-  unsigned long lastPacket = DMXSerial.noDataSince();
-
-     if (lastPacket < 5000) {
-    motor2crs = DMXSerial.read(motor2ps_ad);
-    motor2fn = DMXSerial.read(motor2ps_fn_ad);
-    unsigned int motor2full = (motor2crs << 8) | motor2fn;
-        motor2spin = DMXSerial.read(motor2sp_ad);
-        motor2pos = map(motor2full, 0, 65535, 0, motor2limit);
-        motor2spd = map(motor2spin, 0, 255, 0, maxSpd);
-      motor2.setSpeed(motor2spd); 
-      motor2.moveTo(motor2full);
-      motor2.runSpeedToPosition();
-  }
-}
-
 bool homeMotor1() {
   bool topLim1State = digitalRead(m1lim);
+     // motor1.setCurrentPosition(0);
   //long motor1pos = motor1.currentPosition();
-    if (atStartPos1 == false){
+    //if (atStartPos1 == false){
       Serial.println("Homing Motor 1");
       motor1.setSpeed(homeDnSpd);
       motor1.moveTo(startPos);
-      motor1.runSpeedToPosition();
+    // motor1.runSpeedToPosition();
       atStartPos1 = true;
-    }
+
     if (atStartPos1 == true){
-      Serial.println("at starting point");
+      Serial.println("at starting point 1");
           motor1.setSpeed(homeUpSpd);
           motor1.runSpeed();
       }
@@ -169,24 +156,21 @@ bool homeMotor1() {
       motor1.setCurrentPosition(0);
       m1homed = true;
       Serial.print("Motor 1 Homed");
-      //Serial.println(motor1pos);
     }
-  
     return m1homed;
 }
 
 bool homeMotor2() {
   bool topLim2State = digitalRead(m2lim);
-  //long motor2pos = motor2.currentPosition();
+  //long motor1pos = motor1.currentPosition();
     if (atStartPos2 == false){
       Serial.println("Homing Motor 2");
-      motor2.setSpeed(homeDnSpd);
-      motor2.moveTo(startPos);
-      motor2.runSpeedToPosition();
+      motor1.setSpeed(homeDnSpd);
+      motor1.moveTo(startPos);
       atStartPos2 = true;
     }
     if (atStartPos2 == true){
-      Serial.println("Motor 2 at starting point");
+      Serial.println("at starting point 2");
           motor2.setSpeed(homeUpSpd);
           motor2.runSpeed();
       }
@@ -195,7 +179,6 @@ bool homeMotor2() {
       motor2.setCurrentPosition(0);
       m2homed = true;
       Serial.print("Motor 2 Homed");
-      //Serial.println(motor2pos);
     }
     return m2homed;
 }
@@ -205,34 +188,72 @@ void loop() {
  while (m1homed == false){
     homeMotor1();
   }
-  if (m1homed == true){
-    motor1control();
-  }
-
   if (dualMotor == true){
    while (m2homed == false){
     homeMotor2();
- }
-  if (m2homed == true){
-    motor2control();
+   }
+  
+   unsigned long lastPacket = DMXSerial.noDataSince();
+       if (lastPacket < 5000) {
+
+      long allMotorPos[] = {0,0};
+          mot1crs = DMXSerial.read(motor1ps_ad);
+          mot1fn = DMXSerial.read(motor1ps_fn_ad);
+          unsigned int motor1full = (mot1crs << 8) | mot1fn;
+          unsigned long mot1val = map(motor1full, 0, map1Val, 0, motor1limit);
+          allMotorPos[0] = mot1val;
+      //Serial.println(mot1val, DEC);
+          mot1spd = DMXSerial.read(motor1sp_ad);
+
+          mot2crs = DMXSerial.read(motor2ps_ad);
+          mot2fn = DMXSerial.read(motor2ps_fn_ad);
+          unsigned int motor2full = (mot2crs << 8) | mot2fn;
+         unsigned long mot2val = map(motor2full, 0, map2Val, 0, motor2limit);
+         allMotorPos[1] = mot2val;
+      //Serial.println(mot2val, DEC);
+
+          mot2spd = DMXSerial.read(motor2sp_ad);
+
+      //motor1.setSpeed(mot1spd); 
+      //motor2.setSpeed
+      motor1.setSpeed(mot1spd); 
+      motor2.setSpeed(mot2spd); 
+
+      motors.moveTo(allMotorPos);
+      if (DMXSerial.dataUpdated()){
+      motors.run();
+      if (motor1.distanceToGo() == 0){
+        motor1.stop();
+      }      
+      if (motor2.distanceToGo() == 0){
+        motor2.stop();
+      }
+      }
+    }
+      //Serial.print(allMotorPos[0]);
+      //Serial.print("  |   ");
+      //Serial.print(allMotorPos[1]);
+        }
+
+    if (dualMotor == false){
+         unsigned long lastPacket = DMXSerial.noDataSince();
+       if (lastPacket < 5000) {
+
+      long allMotorPos[] = {0,0};
+          mot1crs = DMXSerial.read(motor1ps_ad);
+          mot1fn = DMXSerial.read(motor1ps_fn_ad);
+          unsigned int motor1full = (mot1crs << 8) | mot1fn;
+          unsigned long mot1val = map(motor1full, 0, map1Val, 0, motor1limit);
+          allMotorPos[0] = mot1val;
+      //Serial.println(mot1val, DEC);
+          mot1spd = DMXSerial.read(motor1sp_ad);
+                motors.moveTo(allMotorPos);
+      if (DMXSerial.dataUpdated()){
+      motors.run();
+      if (motor1.distanceToGo() == 0){
+        motor1.stop();
+      }      
+    }
   }
 }
-
-  if (verbose == true){
-    //Serial.print("motor positions:");
-     // Serial.print('\n'); //newline
-   // Serial.print("_________________");
-     // Serial.print('\n'); //newline
-    Serial.print("motor 1");
-    Serial.print('\t');//prints tab
-    Serial.print("|");
-    Serial.print(" motor 2");
-      Serial.print('\n');//prints newline
-    Serial.print(motor1pos, DEC);
-    Serial.print('\t');//prints tab
-    Serial.print("|");//prints tab
-    Serial.print(" ");//prints tab
-    Serial.print(motor2pos, DEC);
-    Serial.print('\n');
-  }
-} 
+}
