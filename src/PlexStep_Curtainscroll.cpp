@@ -39,10 +39,10 @@ int motor2ps_ad = startAddress + 3;
 int motor2ps_fn_ad = startAddress + 4;
 int motor2sp_ad = startAddress + 5;
 
-int motor1crs = 0;
-int motor1fn = 0;
-int motor2crs = 0;
-int motor2fn = 0;
+unsigned long motor1crs = 0;
+unsigned long motor1fn = 0;
+unsigned long motor2crs = 0;
+unsigned long motor2fn = 0;
 
 unsigned long motor1spd = 0;
 unsigned long motor1pos = 0;
@@ -124,9 +124,10 @@ void motor1control(){
      if (lastPacket < 5000) {
     motor1crs = DMXSerial.read(motor1ps_ad);
     motor1fn = DMXSerial.read(motor1ps_fn_ad);
-    unsigned int motor1full = (motor1crs << 8) | motor1fn;
+    long motor1full = (motor1crs << 8) | motor1fn;
         motor1spin = DMXSerial.read(motor1sp_ad);
-        motor1pos = map(motor1full, 0, 65535, 0, motor1limit);
+        motor1pos = motor1full;
+        //motor1pos = map(motor1full, 0, 65535, 0, motor1limit);
         motor1spd = map(motor1spin, 0, 255, 0, maxSpd);
       motor1.setSpeed(motor1spd); 
       motor1.moveTo(motor1full);
