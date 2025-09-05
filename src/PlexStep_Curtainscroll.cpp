@@ -9,7 +9,7 @@
 #include <MultiStepper.h>
 
 #define SL // define which driver we are programming. Options: SL, CS, SR
-bool verbose = true; // prints diagnostic information to the serial monitor
+//bool verbose = false; // prints diagnostic information to the serial monitor
 
 #if defined (SL)
 int startAddress = 1; // unit 1 is address 1, unit 2 is address 7, unit 3 is address 13
@@ -141,14 +141,14 @@ bool homeMotor1() {
      // motor1.setCurrentPosition(0);
   //long motor1pos = motor1.currentPosition();
     //if (atStartPos1 == false){
-      Serial.println("Homing Motor 1");
+      //Serial.println("Homing Motor 1");
       motor1.setSpeed(homeDnSpd);
       motor1.moveTo(startPos);
     // motor1.runSpeedToPosition();
       atStartPos1 = true;
 
     if (atStartPos1 == true){
-      Serial.println("at starting point 1");
+      //Serial.println("at starting point 1");
           motor1.setSpeed(homeUpSpd);
           motor1.runSpeed();
       }
@@ -156,7 +156,7 @@ bool homeMotor1() {
       motor1.stop();
       motor1.setCurrentPosition(0);
       m1homed = true;
-      Serial.print("Motor 1 Homed");
+      //Serial.print("Motor 1 Homed");
     }
     return m1homed;
 }
@@ -165,13 +165,13 @@ bool homeMotor2() {
   bool topLim2State = digitalRead(m2lim);
   //long motor1pos = motor1.currentPosition();
     if (atStartPos2 == false){
-      Serial.println("Homing Motor 2");
+      //Serial.println("Homing Motor 2");
       motor1.setSpeed(homeDnSpd);
       motor1.moveTo(startPos);
       atStartPos2 = true;
     }
     if (atStartPos2 == true){
-      Serial.println("at starting point 2");
+     // Serial.println("at starting point 2");
           motor2.setSpeed(homeUpSpd);
           motor2.runSpeed();
       }
@@ -179,7 +179,7 @@ bool homeMotor2() {
       motor2.stop();
       motor2.setCurrentPosition(0);
       m2homed = true;
-      Serial.print("Motor 2 Homed");
+     // Serial.print("Motor 2 Homed");
     }
     return m2homed;
 }
