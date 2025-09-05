@@ -8,7 +8,7 @@
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 
-#define CS // define which driver we are programming. Options: SL, CS, SR
+#define SL // define which driver we are programming. Options: SL, CS, SR
 bool verbose = true; // prints diagnostic information to the serial monitor
 
 #if defined (SL)
@@ -19,6 +19,7 @@ unsigned int motor1limit = 1000; //how far the motor is to travel
 unsigned int motor2limit = 1000;
 const int map1Val = 1000;
 const int map2Val = 520;
+unsigned long maxSpd = 8000;  //sets max speed for all steppers
 #endif
 
 #if defined (CS)
@@ -29,6 +30,7 @@ unsigned long motor1limit = 1000; //how far the motor is to travel
 unsigned long  motor2limit = 1000;
 const int map1Val = 512;
 const int map2Val = 512;
+unsigned long maxSpd = 6000;  //sets max speed for all steppers
 
 #endif
 
@@ -40,15 +42,16 @@ unsigned long motor1limit = 1000; //how far the motor is to travel
 unsigned long motor2limit = 1000;
 const int map1Val = 520;
 const int map2Val = 1000;
+unsigned long maxSpd = 8000;  //sets max speed for all steppers
 
 #endif
 
 int motor1ps_ad = startAddress;
 int motor1ps_fn_ad = startAddress + 1;
-int motor1sp_ad = startAddress + 2;
+//int motor1sp_ad = startAddress + 2;
 int motor2ps_ad = startAddress + 3;
 int motor2ps_fn_ad = startAddress + 4;
-int motor2sp_ad = startAddress + 5;
+//int motor2sp_ad = startAddress + 5;
 
 int mot1crs = 0;
 int mot2crs = 0;
@@ -62,8 +65,6 @@ long mot2spd = 0;
 long mot1pos = 0;
 long mot2pos = 0;
 
-unsigned long maxSpd = 5000;  //sets max speed for all steppers
-//unsigned long maxSpd2 = 5000;  //sets max speed for all steppers
 long homeUpSpd = -3000; //how fast the curtain runs up to home
 long homeDnSpd = 3000; //how fast the curtain runs down to home
 const int startPos = 500; //how far the curtain runs out before beginning the homing sequence
@@ -193,35 +194,37 @@ void loop() {
     homeMotor2();
    }
   
-   unsigned long lastPacket = DMXSerial.noDataSince();
-       if (lastPacket < 5000) {
+  // unsigned long lastPacket = DMXSerial.noDataSince();
+       //if (lastPacket < 5000) {
 
       long allMotorPos[] = {0,0};
           mot1crs = DMXSerial.read(motor1ps_ad);
           mot1fn = DMXSerial.read(motor1ps_fn_ad);
+          //mot1spd = DMXSerial.read(motor1sp_ad);
           unsigned int motor1full = (mot1crs << 8) | mot1fn;
           unsigned long mot1val = map(motor1full, 0, map1Val, 0, motor1limit);
           allMotorPos[0] = mot1val;
       //Serial.println(mot1val, DEC);
-          mot1spd = DMXSerial.read(motor1sp_ad);
+
 
           mot2crs = DMXSerial.read(motor2ps_ad);
           mot2fn = DMXSerial.read(motor2ps_fn_ad);
+          //mot2spd = DMXSerial.read(motor2sp_ad);
           unsigned int motor2full = (mot2crs << 8) | mot2fn;
          unsigned long mot2val = map(motor2full, 0, map2Val, 0, motor2limit);
          allMotorPos[1] = mot2val;
       //Serial.println(mot2val, DEC);
 
-          mot2spd = DMXSerial.read(motor2sp_ad);
+
 
       //motor1.setSpeed(mot1spd); 
       //motor2.setSpeed
-      motor1.setSpeed(mot1spd); 
-      motor2.setSpeed(mot2spd); 
+      //motor1.setSpeed(mot1spd); 
+      //motor2.setSpeed(mot2spd); 
 
-      motors.moveTo(allMotorPos);
+    motors.moveTo(allMotorPos);
       if (DMXSerial.dataUpdated()){
-      motors.run();
+        motors.run();
       if (motor1.distanceToGo() == 0){
         motor1.stop();
       }      
@@ -229,31 +232,32 @@ void loop() {
         motor2.stop();
       }
       }
-    }
+   // }
       //Serial.print(allMotorPos[0]);
       //Serial.print("  |   ");
       //Serial.print(allMotorPos[1]);
         }
 
-    if (dualMotor == false){
-         unsigned long lastPacket = DMXSerial.noDataSince();
-       if (lastPacket < 5000) {
+  if (dualMotor == false){
+       //  unsigned long lastPacket = DMXSerial.noDataSince();
+      // if (lastPacket < 5000) {
 
       long allMotorPos[] = {0,0};
           mot1crs = DMXSerial.read(motor1ps_ad);
           mot1fn = DMXSerial.read(motor1ps_fn_ad);
+          //mot1spd = DMXSerial.read(motor1sp_ad);
           unsigned int motor1full = (mot1crs << 8) | mot1fn;
           unsigned long mot1val = map(motor1full, 0, map1Val, 0, motor1limit);
           allMotorPos[0] = mot1val;
       //Serial.println(mot1val, DEC);
-          mot1spd = DMXSerial.read(motor1sp_ad);
-                motors.moveTo(allMotorPos);
+
+    motors.moveTo(allMotorPos);
       if (DMXSerial.dataUpdated()){
-      motors.run();
+        motors.run();
       if (motor1.distanceToGo() == 0){
         motor1.stop();
       }      
     }
-  }
+//  }
 }
 }
