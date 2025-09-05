@@ -96,7 +96,7 @@ MultiStepper motors;
 void setup() {
 
   DMXSerial.init(DMXReceiver);
-  DMXSerial.maxChannel(192);
+  DMXSerial.maxChannel(24);
 
   pinMode(AenPin,OUTPUT);
   pinMode(BenPin,OUTPUT);
@@ -104,7 +104,7 @@ void setup() {
   motor1.setMaxSpeed(maxSpd);
   motor2.setMaxSpeed(maxSpd);
 
-  motor1.setPinsInverted(invDir, false, false); //direction is set in the 
+  motor1.setPinsInverted(invDir, false, false); //direction is set in the defines for each driver
   motor2.setPinsInverted(invDir, false, false); //direction, step, enable, 1-3 direction = true, 4,5 direction = false 
 
   motors.addStepper(motor1);
@@ -179,14 +179,14 @@ void loop() {
 
           unsigned int motor1full = (mot1crs << 8) | mot1fn;
           unsigned long mot1val = map(motor1full, 0, map1Val, 0, motor1limit);
-          allMotorPos[0] = mot1val;
+        allMotorPos[0] = mot1val;
 
           mot2crs = DMXSerial.read(motor2ps_ad);
           mot2fn = DMXSerial.read(motor2ps_fn_ad);
 
           unsigned int motor2full = (mot2crs << 8) | mot2fn;
-         unsigned long mot2val = map(motor2full, 0, map2Val, 0, motor2limit);
-         allMotorPos[1] = mot2val;
+          unsigned long mot2val = map(motor2full, 0, map2Val, 0, motor2limit);
+        allMotorPos[1] = mot2val;
 
     motors.moveTo(allMotorPos);
       if (DMXSerial.dataUpdated()){
